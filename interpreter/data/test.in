@@ -1,10 +1,6 @@
-world 4x5;
-put gold in [0,4];
-put pit in [0,0];
-put pit in [0,1];
-put pit in [2,2];
-put pit in [3,4];
-put wumpus in [1,3];
-put hero in [3,0];
+world 10x10;
+put gold in [7,6];
+put wumpus in [4,2];
+put pit in [?, ? : i == 2, j == 2 * 3];
+put pit in [?, ? : i == 2 * 3 - 1, j <= i * 1 + 9 / 3];
 print world;
-start;

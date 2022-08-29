@@ -1,10 +1,7 @@
-// fuente byaccj para una calculadora sencilla
-
-
 %{
   import java.io.*;
+  import java.util.Collection;
   import java.util.List;
-  import java.util.ArrayList;
 %}
 
 
@@ -12,22 +9,97 @@
 
 %token NL         // nueva línea
 %token CONSTANT   // constante
+%token WORLD
+
+%token PRINT
+
+%token WUMPUS
+%token HERO
+%token GOLD
+%token PIT
+
+%token PUT
+%token REM
+%token IN
 
 %%
 
 program
-  : statement_list            // Lista de sentencias
-  |                           // Programa vacio
+  : // Programa vacio
+  | world_statement
+    statement_list
+  ;
+
+world_statement
+  : WORLD CONSTANT 'x' CONSTANT ';' NL {world.create((int)$2, (int)$4);}
   ;
 
 statement_list
-  : statement                // Unica sentencia
-  | statement statement_list // Sentencia,y lista
+  : // Sentencia vacia
+  | statement ';' NL statement_list // Sentencia,y lista
   ;
 
 statement
-  : CONSTANT NL {System.out.println("constante: "+ $1); $$ = $1;}
+  : action_statement
+  | print_statement
   ;
+
+action_statement 
+  : PUT object IN una_celda   { world.putObject((String)$2, (Celda)$4); }
+  | PUT PIT IN una_celda      { world.putPit((Celda)$4); }
+  | PUT PIT IN muchas_celda   { world.putPits((Collection<Celda>)$4); }
+  ;
+
+una_celda
+  : '[' CONSTANT ',' CONSTANT ']' { $$ = new Celda((int)$2,(int)$4); }
+  ;
+
+// La constante no está siendo tenida en cuenta... se podrían eliminar las reglas que tengan CONSTANT
+muchas_celda
+  : '[' CONSTANT ',' '?'      ':' cond_list ']' {$$ = $6;}
+  | '[' '?'      ',' CONSTANT ':' cond_list ']' {$$ = $6;}
+  | '[' '?'      ',' '?'      ':' cond_list ']' {$$ = $6;}
+  ;
+
+cond_list
+  : cond
+  | cond ',' cond_list {$$ = world.condicion((List<Celda>)$1,(List<Celda>)$3,(a,b) -> true);}
+  ;
+
+cond
+  : expr '=''=' expr {$$ = world.condicion(((Matriz)$1).celdas(),((Matriz)$4).celdas(),(a,b) -> Math.abs(a - b) < 0.01);}
+  | expr '>''=' expr {$$ = world.condicion(((Matriz)$1).celdas(),((Matriz)$4).celdas(),(a,b) -> a >= b);}
+  | expr '<''=' expr {$$ = world.condicion(((Matriz)$1).celdas(),((Matriz)$4).celdas(),(a,b) -> a <= b);}
+  | expr '>' expr    {$$ = world.condicion(((Matriz)$1).celdas(),((Matriz)$3).celdas(),(a,b) -> a > b);}
+  | expr '<' expr    {$$ = world.condicion(((Matriz)$1).celdas(),((Matriz)$3).celdas(),(a,b) -> a < b);}
+  ;
+
+// Código sin ambigüedad + precedencia de operadores
+expr
+  : op
+  | expr '+' term { $$ = Matriz.operar((Matriz)$1, (Matriz)$3, (a,b) -> a+b); }
+  | expr '-' term { $$ = Matriz.operar((Matriz)$1, (Matriz)$3, (a,b) -> a-b); }
+  | term
+  ;
+
+term
+  : term '*' op { $$ = Matriz.operar((Matriz)$1, (Matriz)$3, (a,b) -> a*b); }
+  | term '/' op { $$ = Matriz.operar((Matriz)$1, (Matriz)$3, (a,b) -> a/b); }
+  | op
+  ;
+
+op
+  : CONSTANT  { $$ = Matriz.constante((int)$1); }
+  | 'i'       { $$ = Matriz.i(); }
+  | 'j'       { $$ = Matriz.j(); }
+  ;
+
+
+print_statement
+  : PRINT WORLD { world.print(); }
+  ;
+
+object : HERO | GOLD | WUMPUS;
 
 
 %%
