@@ -54,11 +54,9 @@ una_celda
   : '[' CONSTANT ',' CONSTANT ']' { $$ = new Celda((int)$2,(int)$4); }
   ;
 
-// La constante no está siendo tenida en cuenta... se podrían eliminar las reglas que tengan CONSTANT
+// Se eliminó las reglas que tenían CONSTANT y solo se utiliza la que tienen comodines
 muchas_celda
-  : '[' CONSTANT ',' '?'      ':' cond_list ']' {$$ = $6;}
-  | '[' '?'      ',' CONSTANT ':' cond_list ']' {$$ = $6;}
-  | '[' '?'      ',' '?'      ':' cond_list ']' {$$ = $6;}
+  : '[' '?'      ',' '?'      ':' cond_list ']' {$$ = $6;}
   ;
 
 cond_list
